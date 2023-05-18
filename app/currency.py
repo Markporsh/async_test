@@ -1,10 +1,11 @@
 import asyncio
 from abc import ABC, abstractmethod
+from typing import Dict
 
 update_rates = asyncio.Queue()
 update_amounts = asyncio.Queue()
 
-currency_rates = {'usd': 1, 'eur': 1, 'rub': 1}
+currency_rates: Dict[str, float] = {'usd': 1, 'eur': 1, 'rub': 1}
 
 
 class CurrencyApp(ABC):

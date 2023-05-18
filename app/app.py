@@ -44,16 +44,19 @@ class MyApp(CurrencyApp):
     async def start_rest_api(self) -> None:
         runner = web.AppRunner(app)
         app.add_routes(routes=urlpatterns)
-        await runner.setup()
-        site = web.TCPSite(runner, 'localhost', 8080)
-        await site.start()
-        logging.info('Приложение успешно запущено')
+        try:
+            await runner.setup()
+            site = web.TCPSite(runner, 'localhost', 8080)
+            await site.start()
+        except Exception as error:
+            logging.exception(f'Проблемы при запуске приложения {error}')
+        else:
+            logging.info('Приложение успешно запущено')
 
         while True:
             await asyncio.sleep(360)
 
     async def update_amounts(self) -> None:
-        await asyncio.sleep(5)
         prev_money = currency_amounts.copy()
         prev_currency = currency_rates.copy()
         while True:
@@ -62,18 +65,17 @@ class MyApp(CurrencyApp):
                 for value in data:
                     currency_amounts[value] = data[value]
                 update_amounts.task_done()
-
             if currency_amounts != prev_money:
                 log_amounts(currency_amounts, prev_money, currency_rates)
                 prev_money = currency_amounts.copy()
             if currency_rates != prev_currency:
                 log_rates(currency_amounts, prev_currency, currency_rates)
                 prev_currency = currency_rates.copy()
-            await asyncio.sleep(5)
+            await asyncio.sleep(60)
 
 
 async def main() -> None:
-    ap = MyApp(currency_amounts.keys())
+    ap = MyApp(tuple(currency_amounts.keys()))
     tasks = []
     loop = asyncio.get_running_loop()
     tasks.append(loop.create_task(ap.currency_changes(args_pars.period)))
